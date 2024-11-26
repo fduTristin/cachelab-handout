@@ -1,0 +1,6 @@
+trace.tmp
+tracegen
+*.o
+*.tar
+.csim_results 
+.marker
