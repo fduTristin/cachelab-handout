@@ -5,17 +5,17 @@
 #ifndef CACHELAB_TOOLS_H
 #define CACHELAB_TOOLS_H
 
-#define MAX_TRANS_FUNCS 100
+#define MAX_FUNCS 100
 
-typedef struct trans_func
+typedef struct heat_func
 {
-  void (*func_ptr)(int M, int N, int[N][M], int[M][N]);
+  void (*func_ptr)(int T, int N, int A[T][N]);
   char *description;
   char correct;
   unsigned int num_hits;
   unsigned int num_misses;
   unsigned int num_evictions;
-} trans_func_t;
+} heat_func_t;
 
 /*
  * printSummary - This function provides a standard way for your cache
@@ -27,6 +27,7 @@ void printSummary(int hits,       /* number of  hits */
 
 /* Fill the matrix with data */
 void initMatrix(int M, int N, int A[N][M], int B[M][N]);
+void randMatrix(int M, int N, int A[N][M]);
 
 /* The baseline trans function that produces correct results. */
 void correctTrans(int M, int N, int A[N][M], int B[M][N]);
@@ -35,4 +36,6 @@ void correctTrans(int M, int N, int A[N][M], int B[M][N]);
 void registerTransFunction(
     void (*trans)(int M, int N, int[N][M], int[M][N]), char *desc);
 
+void registerHeatFunction(void (*heat)(int T, int N, int A[T][N]), 
+                           char* desc);
 #endif /* CACHELAB_TOOLS_H */

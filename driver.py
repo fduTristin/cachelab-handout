@@ -4,7 +4,7 @@
 #     simulator and the correctness and performance of their transpose
 #     function. It uses ./test-csim to check the correctness of the
 #     simulator and it runs ./test-trans on three different sized
-#     matrices (32x32, 64x64, and 61x67) to test the correctness and
+#     matrices (48x48, 96x96, and 93x99) to test the correctness and
 #     performance of the transpose function.
 #
 import subprocess;
@@ -34,11 +34,10 @@ def main():
 
     # Configure maxscores here
     maxscore= {};
-    maxscore['csim'] = 27
-    maxscore['transc'] = 1
-    maxscore['trans32'] = 8
-    maxscore['trans64'] = 8
-    maxscore['trans61'] = 10
+    maxscore['csim'] = 39
+    maxscore['trans48'] = 12
+    maxscore['trans96'] = 12
+    honorpart = [2,2,9]
 
     # Parse the command line arguments 
     p = optparse.OptionParser()
@@ -48,88 +47,80 @@ def main():
     autograde = opts.autograde
 
     # Check the correctness of the cache simulator
-    print "Part A: Testing cache simulator"
-    print "Running ./test-csim"
+    print("Part A: Testing cache simulator")
+    print("the following are original points, which will be transformed into the final points")
+    print("Running ./test-csim")
     p = subprocess.Popen("./test-csim", 
                          shell=True, stdout=subprocess.PIPE)
     stdout_data = p.communicate()[0]
 
     # Emit the output from test-csim
-    stdout_data = re.split('\n', stdout_data)
+    stdout_data = re.split('\n', stdout_data.decode())
     for line in stdout_data:
         if re.match("TEST_CSIM_RESULTS", line):
             resultsim = re.findall(r'(\d+)', line)
         else:
-            print "%s" % (line)
-
+            print(line)
+    csim_cscore = int(resultsim[0])
+    print(f"part A final points: {csim_cscore}")
     # Check the correctness and performance of the transpose function
-    # 32x32 transpose
-    print "Part B: Testing transpose function"
-    print "Running ./test-trans -M 32 -N 32"
-    p = subprocess.Popen("./test-trans -M 32 -N 32 | grep TEST_TRANS_RESULTS", 
+    # 48x48 transpose
+    print("Part B: Testing transpose function")
+    print("Running ./test-trans -M 48 -N 48")
+    p = subprocess.Popen("./test-trans -M 48 -N 48 | grep TEST_TRANS_RESULTS", 
                          shell=True, stdout=subprocess.PIPE)
-    stdout_data = p.communicate()[0]
-    result32 = re.findall(r'(\d+)', stdout_data)
+    stdout_data = p.communicate()[0].decode()
+    result48 = re.findall(r'(\d+)', stdout_data)
     
-    # 64x64 transpose
-    print "Running ./test-trans -M 64 -N 64"
-    p = subprocess.Popen("./test-trans -M 64 -N 64 | grep TEST_TRANS_RESULTS", 
+    # 96x96 transpose
+    print("Running ./test-trans -M 96 -N 96")
+    p = subprocess.Popen("./test-trans -M 96 -N 96 | grep TEST_TRANS_RESULTS", 
                          shell=True, stdout=subprocess.PIPE)
-    stdout_data = p.communicate()[0]
-    result64 = re.findall(r'(\d+)', stdout_data)
-    
-    # 61x67 transpose
-    print "Running ./test-trans -M 61 -N 67"
-    p = subprocess.Popen("./test-trans -M 61 -N 67 | grep TEST_TRANS_RESULTS", 
+    stdout_data = p.communicate()[0].decode()
+    result96 = re.findall(r'(\d+)', stdout_data)
+
+    print("Running heat-sim")
+    p = subprocess.Popen("cd heat-sim\n./test-heat | grep TEST_HEAT_SCORES", 
                          shell=True, stdout=subprocess.PIPE)
-    stdout_data = p.communicate()[0]
-    result61 = re.findall(r'(\d+)', stdout_data)
-    
+    stdout_data = p.communicate()[0].decode()
+    result_heat = re.findall(r'(\d+)', stdout_data)
+
     # Compute the scores for each step
-    csim_cscore  = map(int, resultsim[0:1])
-    trans_cscore = int(result32[0]) * int(result64[0]) * int(result61[0]);
-    miss32 = int(result32[1])
-    miss64 = int(result64[1])
-    miss61 = int(result61[1])
-    trans32_score = computeMissScore(miss32, 300, 600, maxscore['trans32']) * int(result32[0])
-    trans64_score = computeMissScore(miss64, 1300, 2000, maxscore['trans64']) * int(result64[0])
-    trans61_score = computeMissScore(miss61, 2000, 3000, maxscore['trans61']) * int(result61[0])
-    total_score = csim_cscore[0] + trans32_score + trans64_score + trans61_score
+    miss48 = int(result48[1])
+    miss96 = int(result96[1])
+    heat_score = int(result_heat[0])
+    trans48_score = computeMissScore(miss48, 500, 800, maxscore['trans48']) * int(result48[0])
+    if miss48 < 450:
+        trans48_score += honorpart[0]
+    trans96_score = computeMissScore(miss96, 2200, 3000, maxscore['trans96']) * int(result96[0])
+    if miss96 < 1900:
+        trans96_score += honorpart[1]
+
+    total_score = csim_cscore + trans48_score + trans96_score + heat_score
 
     # Summarize the results
-    print "\nCache Lab summary:"
-    print "%-22s%8s%10s%12s" % ("", "Points", "Max pts", "Misses")
-    print "%-22s%8.1f%10d" % ("Csim correctness", csim_cscore[0], 
-                              maxscore['csim'])
+    print("\nCache Lab summary:")
+    print("%-22s%8s%10s%12s" % ("", "Points", "Max pts", "Misses"))
+    print("%-22s%8.1f%10d" % ("Csim correctness", csim_cscore, maxscore['csim']))
 
-    misses = str(miss32)
-    if miss32 == 2**31-1 :
+    misses = str(miss48)
+    if miss48 == 2**31-1 :
         misses = "invalid"
-    print "%-22s%8.1f%10d%12s" % ("Trans perf 32x32", trans32_score, 
-                                  maxscore['trans32'], misses)
+    print("%-22s%8.1f%10d%12s" % ("Trans perf 48x48", trans48_score, maxscore['trans48'] + honorpart[0], misses))
 
-    misses = str(miss64)
-    if miss64 == 2**31-1 :
+    misses = str(miss96)
+    if miss96 == 2**31-1 :
         misses = "invalid"
-    print "%-22s%8.1f%10d%12s" % ("Trans perf 64x64", trans64_score, 
-                                  maxscore['trans64'], misses)
+    print("%-22s%8.1f%10d%12s" % ("Trans perf 96x96", trans96_score, maxscore['trans96'] + honorpart[1], misses))
 
-    misses = str(miss61)
-    if miss61 == 2**31-1 :
-        misses = "invalid"
-    print "%-22s%8.1f%10d%12s" % ("Trans perf 61x67", trans61_score, 
-                                  maxscore['trans61'], misses)
+    print("%-22s%8.1f%10d%12s" % ("Trans perf honor-part", heat_score, honorpart[2], ""))
 
-    print "%22s%8.1f%10d" % ("Total points", total_score,
-                             maxscore['csim'] + 
-                             maxscore['trans32'] + 
-                             maxscore['trans64'] +
-                             maxscore['trans61'])
+    print("%22s%8.1f%10d" % ("Total points", total_score, maxscore['csim'] +  maxscore['trans48'] +  maxscore['trans96'] + honorpart[0] + honorpart[1] + honorpart[2]))
     
     # Emit autoresult string for Autolab if called with -A option
     if autograde:
-        autoresult="%.1f:%d:%d:%d" % (total_score, miss32, miss64, miss61)
-        print "\nAUTORESULT_STRING=%s" % autoresult
+        autoresult="%.1f:%d:%d" % (total_score, miss48, miss96)
+        print(f"\nAUTORESULT_STRING={autoresult}")
     
     
 # execute main only if called as a script

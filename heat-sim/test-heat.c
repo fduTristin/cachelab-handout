@@ -16,22 +16,20 @@
 #include <limits.h>   // for INT_MAX
 
 /* Maximum array dimension */
-#define MAXN 256
+#define MAXN 1024
+#define TEST_CNT 3
 
 /* The description string for the transpose_submit() function that the
    student submits for credit */
-#define SUBMIT_DESCRIPTION "Transpose submission"
+#define SUBMIT_DESCRIPTION "Heat Simulate submission"
 
-/* External function defined in trans.c */
-extern void registerFunctions();
-
-/* External variables defined in cachelab-tools.c */
-extern trans_func_t func_list[MAX_TRANS_FUNCS];
-extern int func_counter;
+extern heat_func_t heat_func_list[MAX_FUNCS];
+extern int heat_func_counter;
+extern void registerHeatFunctions();
 
 /* Globals set on the command line */
-static int M = 0;
-static int N = 0;
+static int T = 100;
+static int N = 512;
 
 /* The correctness and performance for the submitted transpose function */
 struct results
@@ -41,50 +39,50 @@ struct results
     int misses;
 };
 static struct results results = {-1, 0, INT_MAX};
+static double missrate_threshould[3] = {0.12, 0.10, 0.078};
 
 /*
  * eval_perf - Evaluate the performance of the registered transpose functions
  */
-void eval_perf(unsigned int s, unsigned int E, unsigned int b)
+double eval_perf(unsigned int s, unsigned int E, unsigned int b)
 {
     int i, flag;
     unsigned int len, hits, misses, evictions;
     unsigned long long int marker_start, marker_end, addr;
-    unsigned long long int Astart, Bstart, Aend, Bend;
+    unsigned long long int Astart, Aend, Bstart;
     char buf[1000], cmd[255];
     char filename[128];
-
-    registerFunctions();
-
+    double missrate=1;
     /* Open the complete trace file */
     FILE *full_trace_fp;
     FILE *part_trace_fp;
 
     /* Evaluate the performance of each registered transpose function */
 
-    for (i = 0; i < func_counter; i++)
+    for (i = 0; i < heat_func_counter; i++)
     {
-        if (strcmp(func_list[i].description, SUBMIT_DESCRIPTION) == 0)
+        if (strcmp(heat_func_list[i].description, SUBMIT_DESCRIPTION) == 0)
             results.funcid = i; /* remember which function is the submission */
 
-        printf("\nFunction %d (%d total)\nStep 1: Validating and generating memory traces\n", i, func_counter);
+        printf("\nFunction %d (%d total)\nStep 1: Validating and generating memory traces\n", i, heat_func_counter);
         /* Use valgrind to generate the trace */
 
-        sprintf(cmd, "valgrind --tool=lackey --trace-mem=yes --log-fd=1 -v ./tracegen -M %d -N %d -F %d  > trace.tmp", M, N, i);
+        sprintf(cmd, "valgrind --tool=lackey --trace-mem=yes --log-fd=1 -v ./heatgen -T %d -N %d -F %d  > trace.tmp", T, N, i);
         flag = WEXITSTATUS(system(cmd));
         if (0 != flag)
         {
-            printf("Validation error at function %d! Run ./tracegen -M %d -N %d -F %d for details.\nSkipping performance evaluation for this function.\n", flag - 1, M, N, i);
+            printf("Validation error at function %d! Run ./heatgen -T %d -N %d -F %d for details.\nSkipping performance evaluation for this function.\n", flag - 1, T, N, i);
             continue;
         }
 
         /* Get the start and end marker addresses */
         FILE *marker_fp = fopen(".marker", "r");
         assert(marker_fp);
+
         fscanf(marker_fp, "%llx %llx %llx %llx", &marker_start, &marker_end, &Astart, &Bstart);
         fclose(marker_fp);
 
-        func_list[i].correct = 1;
+        heat_func_list[i].correct = 1;
 
         /* Save the correctness of the transpose submission */
         if (results.funcid == i)
@@ -102,14 +100,8 @@ void eval_perf(unsigned int s, unsigned int E, unsigned int b)
 
         /* Locate trace corresponding to the trans function */
         flag = 0;
-        Aend = Astart + 256 * 256 * sizeof(int);
-        Bend = Bstart + 256 * 256 * sizeof(int);
-        unsigned long long int Adelta = 48 - (Astart % 48);
-        unsigned long long int Bdelta = 48 - (Bstart % 48);
-        if (Aend + Adelta > Bstart + Bdelta)
-        {
-            Bdelta += 48;
-        }
+        Aend = Astart + 1024 * 1024 * sizeof(int);
+        unsigned long long int Adelta = 0;
         while (fgets(buf, 1000, full_trace_fp) != NULL)
         {
             /* We are only interested in memory access instructions */
@@ -140,13 +132,8 @@ void eval_perf(unsigned int s, unsigned int E, unsigned int b)
                     {
                         addr = addr + Adelta;
                         sprintf(buf + 3, "%llx,%u\n", addr, len);
+                        fputs(buf, part_trace_fp);
                     }
-                    else if (addr >= Bstart && addr < Bend)
-                    {
-                        addr = addr + Bdelta;
-                        sprintf(buf + 3, "%llx,%u\n", addr, len);
-                    }
-                    fputs(buf, part_trace_fp);
                 }
 
                 /* if end marker found, close trace file */
@@ -172,18 +159,21 @@ void eval_perf(unsigned int s, unsigned int E, unsigned int b)
         assert(in_fp);
         fscanf(in_fp, "%u %u %u", &hits, &misses, &evictions);
         fclose(in_fp);
-        func_list[i].num_hits = hits;
-        func_list[i].num_misses = misses;
-        func_list[i].num_evictions = evictions;
-        printf("func %u (%s): hits:%u, misses:%u, evictions:%u\n",
-               i, func_list[i].description, hits, misses, evictions);
-
+        heat_func_list[i].num_hits = hits;
+        heat_func_list[i].num_misses = misses;
+        heat_func_list[i].num_evictions = evictions;
+        double missrate_curr = (double)misses/(misses+hits);
+        printf("func %u (%s): hits:%u, misses:%u, evictions:%u miss rate:%lf\n",
+               i, heat_func_list[i].description, hits, misses, evictions, missrate_curr);
+        
         /* If it is transpose_submit(), record number of misses */
         if (results.funcid == i)
         {
             results.misses = misses;
+            missrate = missrate_curr;
         }
     }
+    return missrate;
 }
 
 /*
@@ -191,12 +181,12 @@ void eval_perf(unsigned int s, unsigned int E, unsigned int b)
  */
 void usage(char *argv[])
 {
-    printf("Usage: %s [-h] -M <rows> -N <cols>\n", argv[0]);
+    printf("Usage: %s [-h] -T <t> -N <x>\n", argv[0]);
     printf("Options:\n");
     printf("  -h          Print this help message.\n");
-    printf("  -M <rows>   Number of matrix rows (max %d)\n", MAXN);
-    printf("  -N <cols>   Number of  matrix columns (max %d)\n", MAXN);
-    printf("Example: %s -M 8 -N 8\n", argv[0]);
+    printf("  -T <t>   Number of time steps (max %d)\n", MAXN);
+    printf("  -N <x>   Number of points (max %d)\n", MAXN);
+    printf("Example: %s -T 8 -N 8\n", argv[0]);
 }
 
 /*
@@ -228,12 +218,12 @@ int main(int argc, char *argv[])
 {
     char c;
 
-    while ((c = getopt(argc, argv, "M:N:h")) != -1)
+    while ((c = getopt(argc, argv, "T:N:h")) != -1)
     {
         switch (c)
         {
-        case 'M':
-            M = atoi(optarg);
+        case 'T':
+            T = atoi(optarg);
             break;
         case 'N':
             N = atoi(optarg);
@@ -247,14 +237,14 @@ int main(int argc, char *argv[])
         }
     }
 
-    if (M == 0 || N == 0)
+    if (T == 0 || N == 0)
     {
         printf("Error: Missing required argument\n");
         usage(argv);
         exit(1);
     }
 
-    if (M > MAXN || N > MAXN)
+    if (T > MAXN || N > MAXN)
     {
         printf("Error: M or N exceeds %d\n", MAXN);
         usage(argv);
@@ -278,7 +268,17 @@ int main(int argc, char *argv[])
     alarm(120);
 
     /* Check the performance of the student's transpose function */
-    eval_perf(48, 1, 48);
+    registerHeatFunctions();
+    int s[TEST_CNT] = {1, 1, 1};
+    int E[TEST_CNT] = {16, 32, 64};
+    int b[TEST_CNT] = {16, 16, 16};
+    int score = 0;
+    for (int i = 0; i < TEST_CNT; i++)
+    {
+        double missrate = eval_perf(s[i], E[i], b[i]);
+        if (missrate <= missrate_threshould[i])
+            score += 3;
+    }
 
     /* Emit the results for this particular test */
     if (results.funcid == -1)
@@ -290,9 +290,7 @@ int main(int argc, char *argv[])
     }
     else
     {
-        printf("\nSummary for official submission (func %d): correctness=%d misses=%d\n",
-               results.funcid, results.correct, results.misses);
-        printf("\nTEST_TRANS_RESULTS=%d:%d\n", results.correct, results.misses);
+        printf("\nTEST_HEAT_SCORES=%d\n", score);
     }
     return 0;
 }
