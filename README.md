@@ -1,6 +1,12 @@
-> deadline 2024.12.12
+> deadline 2024.12.12 00:00
 
 ## 实验简介
+
+### 负责助教
+
+* [范意阳](22307110117@m.fudan.edu.cn)
+* [孔令宇](22307110120@m.fudan.edu.cn)
+* [徐厚泽](22307110054@m.fudan.edu.cn)
 
 ### 前言
 
@@ -96,7 +102,22 @@ trace文件是通过`valgrind`的[lackey](https://valgrind.org/docs/manual/lk-ma
 
 `csim-ref`会输出cache的命中、缺失、替换次数，比如：
 
-<table><tbody><tr><td><pre><span>1</span><br><span>2</span><br><span>3</span><br><span>4</span><br><span>5</span><br><span>6</span><br><span>7</span><br><span>8</span><br><span>9</span><br><span>10</span><br><span>11</span><br><span>12</span><br><span>13</span><br><span>14</span><br><span>15</span><br><span>16</span><br></pre></td><td><pre><span><span>$ </span><span id="code-lang-bash">./csim-ref -s 16 -E 1 -b 16 -t traces/yi.trace -q LRU</span></span><br><span>hits:4 misses:5 evictions:3</span><br><span>```  </span><br><span></span><br><span>verbose模式：</span><br><span></span><br><span>```shell</span><br><span><span>$ </span><span id="code-lang-bash">./csim-ref -v -s 16 -E 1 -b 16 -t traces/yi.trace -q LRU</span></span><br><span>L 10,1 miss</span><br><span>M 20,1 miss hit</span><br><span>L 22,1 hit</span><br><span>S 18,1 hit</span><br><span>L 110,1 miss eviction</span><br><span>L 210,1 miss eviction</span><br><span>M 12,1 miss eviction hit</span><br><span>hits:4 misses:5 evictions:3</span><br></pre></td></tr></tbody></table>
+```shell
+# verbose = false
+./csim-ref -s 16 -E 1 -b 16 -t traces/yi.trace
+hits:4 misses:5 evictions:3
+
+# verbose = true
+$ ./csim-ref -v -s 16 -E 1 -b 16 -t traces/yi.trace
+L 10,1 miss 
+M 20,1 miss hit 
+L 22,1 hit 
+S 18,1 hit 
+L 110,1 miss eviction 
+L 210,1 miss eviction 
+M 12,1 miss eviction hit 
+hits:4 misses:5 evictions:3y
+```
 
 你的实现需要具有和`csim-ref`相同的功能，包括verbose模式输出debug信息
 
@@ -227,14 +248,14 @@ cache为何被称为“高速缓存”，是因为读取cache的速率远快于�
 ### evaluation
 
 我们将使用cache参数为：`s = 48, E = 1, b = 48`，即每个cache line大小为48字节，共有48个cache line，每个set中只有1个cache line。  
-我们将使用以下3种矩阵来进行评测 
+我们将使用以下2种矩阵来进行评测 
 
 - 48 \* 48的矩阵，分值`15`分，miss次数`< 500`则满分，miss次数`> 800`则0分，`500~800`将按miss次数获取一定比例的分数 
   - 若`<450`，则获得2分荣誉分
 - 96 \* 96的矩阵，分值`15`分，miss次数`< 2200`则满分，miss次数`> 3000`则0分，`2200~3000`将按miss次数获取一定比例的分数 
   - 若`<1900`，则获得2分荣誉分
 
-我们只会针对这三种矩阵进行测试，所以你 **可以** 只考虑这三种情况
+我们只会针对这两种矩阵进行测试，所以你 **可以** 只考虑这两种情况
 
 #### step 0
 
@@ -318,7 +339,7 @@ u[t+1][x] = u[t][x] + ALPHA *(u[t][x+1] -2*u[t][x] + u[t][x-1]);
 
 实现你的算法后，重新编译并运行`test-heat`。
 
-若你的miss rate小于等于下面的条件，该测试点将获得3分。（共9分）
+若你的miss小于等于下面的条件，该测试点将获得3分。（共9分）
 
 | E    | miss rate |
 | ---- | --------- |
@@ -333,6 +354,8 @@ u[t+1][x] = u[t][x] + ALPHA *(u[t][x+1] -2*u[t][x] + u[t][x-1]);
 <table><tbody><tr><td><pre><span>1</span><br></pre></td><td><pre><span>python3 ./driver.py</span><br></pre></td></tr></tbody></table>
 
 注意请保证在项目根目录和`./heat-sim`目录下都已经`make`过了
+
+`heatsim`运行略慢，~~请耐心等待~~
 
 ## 提交实验
 

@@ -35,8 +35,8 @@ def main():
     # Configure maxscores here
     maxscore= {};
     maxscore['csim'] = 39
-    maxscore['trans48'] = 12
-    maxscore['trans96'] = 12
+    maxscore['trans48'] = 15
+    maxscore['trans96'] = 15
     honorpart = [2,2,9]
 
     # Parse the command line arguments 
