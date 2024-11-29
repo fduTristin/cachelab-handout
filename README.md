@@ -189,10 +189,19 @@ hits:4 misses:5 evictions:3y
 
 共有10项测试
 
-<table><tbody><tr>
-<td><pre><span>1</span><br><span>2</span><br><span>3</span><br><span>4</span><br><span>5</span><br><span>6</span><br><span>7</span><br><span>8</span><br><span>9</span><br><span>10</span><br></pre></td>
-<td><pre><span>./csim -s 1 -E 1 -b 1 -t traces/yi2.trace -q LRU</span><br><span>./csim -s 4 -E 2 -b 4 -t traces/yi.trace -q LRU</span><br><span>./csim -s 2 -E 1 -b 4 -t traces/dave.trace -q LRU</span><br><span>./csim -s 2 -E 1 -b 3 -t traces/trans.trace -q LRU</span><br><span>./csim -s 2 -E 2 -b 3 -t traces/trans.trace -q LRU</span><br><span>./csim -s 2 -E 4 -b 3 -t traces/trans.trace -q LRU</span><br><span>./csim -s 5 -E 1 -b 5 -t traces/trans.trace -q LRU</span><br><span>./csim -s 5 -E 1 -b 5 -t traces/long.trace -q LRU</span><br><span>./csim -s 5 -E 1 -b 5 -t traces/trans.trace -q 2Q</span><br><span>./csim -s 5 -E 1 -b 5 -t traces/long.trace -q 2Q</span><br></pre></td>
-</tr></tbody></table>
+```shell
+$ ./csim -s 1 -E 1 -b 12 -t traces/yi2.trace -q LRU
+$ ./csim -s 4 -E 2 -b 20 -t traces/yi.trace -q LRU
+$ ./csim -s 2 -E 1 -b 20 -t traces/dave.trace -q LRU
+$ ./csim -s 2 -E 1 -b 16 -t traces/trans.trace -q LRU
+$ ./csim -s 2 -E 2 -b 16 -t traces/trans.trace -q LRU
+$ ./csim -s 2 -E 4 -b 16 -t traces/trans.trace -q LRU
+$ ./csim -s 5 -E 1 -b 32 -t traces/trans.trace -q LRU
+$ ./csim -s 5 -E 1 -b 32 -t traces/long.trace -q LRU
+$ ./csim -s 5 -E 1 -b 32 -t traces/trans.trace -q 2Q
+$ ./csim -s 5 -E 1 -b 32 -t traces/long.trace -q 2Q
+```
+
 
 
 得分为：前7项每项`3`分，最后3项`6`分，共`39`分；对于每一项，`hit, miss, eviction`的正确性各占`1/3`的分数
