@@ -206,7 +206,7 @@ $ ./csim -s 5 -E 1 -b 32 -t traces/long.trace -q 2Q
 
 得分为：前7项每项`3`分，最后3项`6`分，共`39`分；对于每一项，`hit, miss, eviction`的正确性各占`1/3`的分数
 
-最终的分数可以通过`./driver.py`来查看
+最终的分数可以通过`python3 ./driver.py`来查看
 
 ### hints
 
