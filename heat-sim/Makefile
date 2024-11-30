@@ -24,3 +24,4 @@ clean:
 	rm -f test-heat heatgen
 	rm -f trace.all trace.f*
 	rm -f .csim_results .marker
+	rm -rf trace.tmp

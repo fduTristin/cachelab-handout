@@ -171,7 +171,7 @@ int eval_perf(unsigned int s, unsigned int E, unsigned int b)
             results.misses = misses;
         }
     }
-    return misses;
+    return results.misses;
 }
 
 /*

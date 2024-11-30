@@ -113,14 +113,13 @@ def main():
         misses = "invalid"
     print("%-22s%8.1f%10d%12s" % ("Trans perf 96x96", trans96_score, maxscore['trans96'] + honorpart[1], misses))
 
-    print("%-22s%8.1f%10d%12s" % ("Trans perf C", heat_score, honorpart[2], ""))
+    print("%-22s%8.1f%10d%12s" % ("Heat Simulator perf C", heat_score, honorpart[2], ""))
 
     print("%22s%8.1f%10d" % ("Total points", total_score, maxscore['csim'] +  maxscore['trans48'] +  maxscore['trans96'] + honorpart[0] + honorpart[1] + honorpart[2]))
     
     # Emit autoresult string for Autolab if called with -A option
     if autograde:
-        autoresult="%.1f:%d:%d" % (total_score, miss48, miss96)
-        print(f"\nAUTORESULT_STRING={autoresult}")
+        print(f"{csim_cscore}_{trans48_score}_{trans96_score}_{heat_score}")
     
     
 # execute main only if called as a script
