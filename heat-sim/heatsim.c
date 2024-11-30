@@ -20,10 +20,11 @@ void heat_sim_example(int T, int N, int A[T][N])
 void heat_sim(int T, int N, int A[T][N])
 {
     // TODO: implement your own algorithm
-    heat_sim_example(T, N, A);
+    // heat_sim_example(T, N, A);
 }
 
 void registerHeatFunctions()
 {
+    // registerHeatFunction(heat_sim_example, heat_sim_desc);
     registerHeatFunction(heat_sim, heat_sim_desc);
 }

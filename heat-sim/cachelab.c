@@ -10,7 +10,6 @@
 
 heat_func_t heat_func_list[MAX_FUNCS];
 
-int func_counter = 0; 
 int heat_func_counter = 0;
 
 /* 
@@ -71,11 +70,11 @@ void correctTrans(int M, int N, int A[N][M], int B[M][N])
 void registerHeatFunction(void (*heat)(int T, int N, int A[T][N]), 
                            char* desc)
 {
-    heat_func_list[func_counter].func_ptr = heat;
-    heat_func_list[func_counter].description = desc;
-    heat_func_list[func_counter].correct = 0;
-    heat_func_list[func_counter].num_hits = 0;
-    heat_func_list[func_counter].num_misses = 0;
-    heat_func_list[func_counter].num_evictions =0;
+    heat_func_list[heat_func_counter].func_ptr = heat;
+    heat_func_list[heat_func_counter].description = desc;
+    heat_func_list[heat_func_counter].correct = 0;
+    heat_func_list[heat_func_counter].num_hits = 0;
+    heat_func_list[heat_func_counter].num_misses = 0;
+    heat_func_list[heat_func_counter].num_evictions =0;
     heat_func_counter++;
 }

@@ -113,7 +113,7 @@ def main():
         misses = "invalid"
     print("%-22s%8.1f%10d%12s" % ("Trans perf 96x96", trans96_score, maxscore['trans96'] + honorpart[1], misses))
 
-    print("%-22s%8.1f%10d%12s" % ("Trans perf honor-part", heat_score, honorpart[2], ""))
+    print("%-22s%8.1f%10d%12s" % ("Trans perf C", heat_score, honorpart[2], ""))
 
     print("%22s%8.1f%10d" % ("Total points", total_score, maxscore['csim'] +  maxscore['trans48'] +  maxscore['trans96'] + honorpart[0] + honorpart[1] + honorpart[2]))
     

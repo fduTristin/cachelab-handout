@@ -31,7 +31,7 @@ extern void registerHeatFunctions();
 static int T = 100;
 static int N = 512;
 
-/* The correctness and performance for the submitted transpose function */
+/* The correctness and performance for the submitted heat function */
 struct results
 {
     int funcid;
@@ -39,12 +39,12 @@ struct results
     int misses;
 };
 static struct results results = {-1, 0, INT_MAX};
-static double missrate_threshould[3] = {0.12, 0.10, 0.078};
-
+// static double missrate_threshold[3] = {0.12, 0.10, 0.078};
+static int miss_threshold[3] = {22500, 18000, 15720};
 /*
  * eval_perf - Evaluate the performance of the registered transpose functions
  */
-double eval_perf(unsigned int s, unsigned int E, unsigned int b)
+int eval_perf(unsigned int s, unsigned int E, unsigned int b)
 {
     int i, flag;
     unsigned int len, hits, misses, evictions;
@@ -52,7 +52,6 @@ double eval_perf(unsigned int s, unsigned int E, unsigned int b)
     unsigned long long int Astart, Aend, Bstart;
     char buf[1000], cmd[255];
     char filename[128];
-    double missrate=1;
     /* Open the complete trace file */
     FILE *full_trace_fp;
     FILE *part_trace_fp;
@@ -61,6 +60,7 @@ double eval_perf(unsigned int s, unsigned int E, unsigned int b)
 
     for (i = 0; i < heat_func_counter; i++)
     {
+        printf("begin heatfunc %i", i);
         if (strcmp(heat_func_list[i].description, SUBMIT_DESCRIPTION) == 0)
             results.funcid = i; /* remember which function is the submission */
 
@@ -150,7 +150,7 @@ double eval_perf(unsigned int s, unsigned int E, unsigned int b)
         /* Run the reference simulator */
         printf("Step 2: Evaluating performance (s=%d, E=%d, b=%d)\n", s, E, b);
         char cmd[255];
-        sprintf(cmd, "./csim-ref -s %u -E %u -b %u -t trace.f%d > /dev/null",
+        sprintf(cmd, "./csim-ref -s %u -E %u -b %u -t trace.f%d -q LRU > /dev/null",
                 s, E, b, i);
         system(cmd);
 
@@ -162,18 +162,16 @@ double eval_perf(unsigned int s, unsigned int E, unsigned int b)
         heat_func_list[i].num_hits = hits;
         heat_func_list[i].num_misses = misses;
         heat_func_list[i].num_evictions = evictions;
-        double missrate_curr = (double)misses/(misses+hits);
-        printf("func %u (%s): hits:%u, misses:%u, evictions:%u miss rate:%lf\n",
-               i, heat_func_list[i].description, hits, misses, evictions, missrate_curr);
-        
+        printf("func %u (%s): hits:%u, misses:%u, evictions:%u\n",
+               i, heat_func_list[i].description, hits, misses, evictions);
+
         /* If it is transpose_submit(), record number of misses */
         if (results.funcid == i)
         {
             results.misses = misses;
-            missrate = missrate_curr;
         }
     }
-    return missrate;
+    return misses;
 }
 
 /*
@@ -264,9 +262,6 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-    /* Time out and give up after a while */
-    alarm(120);
-
     /* Check the performance of the student's transpose function */
     registerHeatFunctions();
     int s[TEST_CNT] = {1, 1, 1};
@@ -275,8 +270,10 @@ int main(int argc, char *argv[])
     int score = 0;
     for (int i = 0; i < TEST_CNT; i++)
     {
-        double missrate = eval_perf(s[i], E[i], b[i]);
-        if (missrate <= missrate_threshould[i])
+        /* Time out and give up after a while */
+        alarm(120);
+        int miss = eval_perf(s[i], E[i], b[i]);
+        if (miss <= miss_threshold[i])
             score += 3;
     }
 
